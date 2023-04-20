@@ -1,0 +1,11 @@
+{
+  "Environment": "Development",
+
+  "Database": {
+    "Database": "kando",
+    "User": "user",
+    "Password": "password",
+    "Host": "localhost",
+    "Port": 5783
+  }
+}

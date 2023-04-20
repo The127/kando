@@ -1,0 +1,31 @@
+### check response status is 201
+POST http://localhost:8080/api/users/
+Content-Type: application/json
+
+{
+  "displayName": "Karolin Kostial",
+  "username": "kkostial3",
+  "password": "a"
+}
+
+> {%
+    client.test("Creates user", function () {
+        client.assert(response.status === 201, "expected 201 but got " + response.status)
+    })
+%}
+
+### check display name max length validation
+POST http://localhost:8080/api/users/
+Content-Type: application/json
+
+{
+  "displayName": "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+  "username": "kbaehr",
+  "password": ""
+}
+
+> {%
+    client.test("checks display name max length", function () {
+        client.assert(response.status === 400, "expected 400 but got " + response.status)
+    })
+%}

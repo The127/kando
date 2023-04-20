@@ -1,0 +1,22 @@
+version: '3.1'
+
+services:
+
+  db:
+    image: postgres
+    restart: always
+    ports:
+      - "5783:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: kando
+
+  testDb:
+    image: postgres
+    restart: always
+    ports:
+      - "5784:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password

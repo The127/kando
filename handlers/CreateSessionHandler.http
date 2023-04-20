@@ -1,0 +1,21 @@
+### create session 201
+POST http://localhost:8080/api/sessions/
+Content-Type: application/json
+
+{
+  "username": "kkostial",
+  "password": "a"
+}
+
+> {%
+    client.test("Creates session", function () {
+        client.assert("a" === "b")
+        client.assert(response.status === 201, "expected 201 but got " + response.status)
+        client.log(response.headers.valueOf("Cookie"))
+        client.assert(response.headers.valuesOf("Cookie")
+            .filter(function (c) {
+                return true
+            }).length == 1,
+            "SessionId cookie was not set")
+    })
+%}

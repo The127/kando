@@ -1,0 +1,2 @@
+### delete session
+DELETE http://localhost:8080/api/sessions/
