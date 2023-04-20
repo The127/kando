@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+	"kando-backend/events"
 	"kando-backend/httpErrors"
 	"kando-backend/ioc"
+	"kando-backend/mediator"
 	"kando-backend/middlewares"
 	"kando-backend/services"
 )
@@ -22,6 +24,8 @@ type CreateSessionResponse struct {
 
 func CreateSessionCommandHandler(command CreateSessionCommand, ctx context.Context) (CreateSessionResponse, error) {
 	scope := middlewares.GetScope(ctx)
+
+	m := ioc.Get[*mediator.Mediator](scope)
 	rcs := ioc.Get[*services.RequestContextService](scope)
 
 	tx, err := rcs.BeginTx()
@@ -56,6 +60,14 @@ func CreateSessionCommandHandler(command CreateSessionCommand, ctx context.Conte
 			returning "id";`,
 		userInfo.Id).
 		Scan(&sessionId)
+	if err != nil {
+		return CreateSessionResponse{}, err
+	}
+
+	sessionCreatedEvent := events.SessionCreatedEvent{
+		Id: sessionId,
+	}
+	err = mediator.SendEvent(m, sessionCreatedEvent, ctx)
 	if err != nil {
 		return CreateSessionResponse{}, err
 	}

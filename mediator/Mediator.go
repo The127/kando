@@ -8,8 +8,9 @@ import (
 )
 
 type Mediator struct {
-	behaviours map[reflect.Type][]behaviourInfo
-	handlers   map[reflect.Type]handlerInfo
+	behaviours    map[reflect.Type][]behaviourInfo
+	handlers      map[reflect.Type]handlerInfo
+	eventHandlers map[reflect.Type][]eventHandlerInfo
 }
 
 func NewMediator() *Mediator {
@@ -17,6 +18,31 @@ func NewMediator() *Mediator {
 		handlers:   map[reflect.Type]handlerInfo{},
 		behaviours: map[reflect.Type][]behaviourInfo{},
 	}
+}
+
+type EventHandlerFunc[TEvent any] func(TEvent, context.Context) error
+
+type eventHandlerInfo struct {
+	eventType        reflect.Type
+	eventHandlerFunc func(any, context.Context) error
+}
+
+func RegisterEventHandler[TEvent any](m *Mediator, eventHandler EventHandlerFunc[TEvent]) {
+	eventType := utils.TypeOf[TEvent]()
+
+	eventHandlers, ok := m.eventHandlers[eventType]
+	if !ok {
+		eventHandlers = []eventHandlerInfo{}
+	}
+
+	eventHandlers = append(eventHandlers, eventHandlerInfo{
+		eventType: eventType,
+		eventHandlerFunc: func(event any, ctx context.Context) error {
+			return eventHandler(event.(TEvent), ctx)
+		},
+	})
+
+	m.eventHandlers[eventType] = eventHandlers
 }
 
 type Next func()
@@ -62,6 +88,25 @@ type handlerInfo struct {
 	requestType  reflect.Type
 	responseType reflect.Type
 	handlerFunc  func(any, context.Context) (any, error)
+}
+
+func SendEvent[TEvent any](m *Mediator, event TEvent, ctx context.Context) error {
+	eventType := utils.TypeOf[TEvent]()
+
+	eventHandlers, ok := m.eventHandlers[eventType]
+	if !ok {
+		log.Logger.Debugf("Could not find any event handlers for %s", eventType.Name())
+		return nil
+	}
+
+	for _, eventHandler := range eventHandlers {
+		err := eventHandler.eventHandlerFunc(event, ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func Send[TResponse any](m *Mediator, request any, ctx context.Context) (TResponse, error) {

@@ -3,8 +3,10 @@ package commands
 import (
 	"context"
 	"golang.org/x/crypto/bcrypt"
+	"kando-backend/events"
 	"kando-backend/httpErrors"
 	"kando-backend/ioc"
+	"kando-backend/mediator"
 	"kando-backend/middlewares"
 	"kando-backend/services"
 )
@@ -17,6 +19,8 @@ type CreateUserCommand struct {
 
 func CreateUserCommandHandler(command CreateUserCommand, ctx context.Context) (any, error) {
 	scope := middlewares.GetScope(ctx)
+
+	m := ioc.Get[*mediator.Mediator](scope)
 	rcs := ioc.Get[*services.RequestContextService](scope)
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(command.Password), bcrypt.MinCost)
@@ -42,9 +46,15 @@ func CreateUserCommandHandler(command CreateUserCommand, ctx context.Context) (a
 	}
 
 	_, err = tx.Exec(`insert into "public"."users" 
-			("id", "display_name", "username", "hashed_password")
-			values (gen_random_uuid(), $1, $2, $3);`,
+			("display_name", "username", "hashed_password")
+			values ($1, $2, $3);`,
 		command.DisplayName, command.Username, hashedPassword)
+	if err != nil {
+		return false, err
+	}
+
+	userCreatedEvent := events.UserCreatedEvent{}
+	err = mediator.SendEvent(m, userCreatedEvent, ctx)
 	if err != nil {
 		return false, err
 	}
