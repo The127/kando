@@ -28,7 +28,7 @@ func CreateSessionCommandHandler(command CreateSessionCommand, ctx context.Conte
 	m := ioc.Get[*mediator.Mediator](scope)
 	rcs := ioc.Get[*services.RequestContextService](scope)
 
-	tx, err := rcs.BeginTx()
+	tx, err := rcs.GetTx()
 	if err != nil {
 		return CreateSessionResponse{}, err
 	}
@@ -68,11 +68,6 @@ func CreateSessionCommandHandler(command CreateSessionCommand, ctx context.Conte
 		Id: sessionId,
 	}
 	err = mediator.SendEvent(m, sessionCreatedEvent, ctx)
-	if err != nil {
-		return CreateSessionResponse{}, err
-	}
-
-	err = rcs.CommitTx()
 	if err != nil {
 		return CreateSessionResponse{}, err
 	}

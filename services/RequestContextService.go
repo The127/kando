@@ -12,8 +12,7 @@ type RequestContextService struct {
 	scope  *ioc.DependencyProvider
 	errors []error
 
-	tx      *sql.Tx
-	txCount uint
+	tx *sql.Tx
 }
 
 func NewRequestContextService(scope *ioc.DependencyProvider) *RequestContextService {
@@ -32,7 +31,7 @@ func (rcs *RequestContextService) Error(err error) {
 	rcs.errors = append(rcs.errors, err)
 }
 
-func (rcs *RequestContextService) BeginTx() (*sql.Tx, error) {
+func (rcs *RequestContextService) GetTx() (*sql.Tx, error) {
 	if rcs.tx != nil {
 		return rcs.tx, nil
 	}
@@ -41,33 +40,19 @@ func (rcs *RequestContextService) BeginTx() (*sql.Tx, error) {
 	tx, err := db.Begin()
 
 	rcs.tx = tx
-	rcs.txCount++
 
 	return tx, err
 }
 
-func (rcs *RequestContextService) CommitTx() error {
-	if rcs.tx == nil {
-		return nil
-	}
-
-	rcs.txCount--
-
-	if rcs.txCount == 0 {
-		err := rcs.tx.Commit()
-		if err != nil {
-			return err
-		}
-
-		rcs.tx = nil
-	}
-
-	return nil
-}
-
 func (rcs *RequestContextService) Close() error {
-	if rcs.tx != nil {
-		return rcs.tx.Rollback()
+	if len(rcs.errors) == 0 {
+		if rcs.tx != nil {
+			return rcs.tx.Commit()
+		}
+	} else {
+		if rcs.tx != nil {
+			return rcs.tx.Rollback()
+		}
 	}
 
 	return nil

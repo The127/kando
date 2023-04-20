@@ -28,7 +28,7 @@ func CreateUserCommandHandler(command CreateUserCommand, ctx context.Context) (a
 		return false, err
 	}
 
-	tx, err := rcs.BeginTx()
+	tx, err := rcs.GetTx()
 	if err != nil {
 		return false, err
 	}
@@ -55,11 +55,6 @@ func CreateUserCommandHandler(command CreateUserCommand, ctx context.Context) (a
 
 	userCreatedEvent := events.UserCreatedEvent{}
 	err = mediator.SendEvent(m, userCreatedEvent, ctx)
-	if err != nil {
-		return false, err
-	}
-
-	err = rcs.CommitTx()
 	if err != nil {
 		return false, err
 	}

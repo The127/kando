@@ -13,7 +13,7 @@ type DeleteSessionCommand struct {
 func DeleteSessionCommandHandler(command DeleteSessionCommand, scope *ioc.DependencyProvider) (any, error) {
 	rcs := ioc.Get[*services.RequestContextService](scope)
 
-	tx, err := rcs.BeginTx()
+	tx, err := rcs.GetTx()
 	if err != nil {
 		return false, err
 	}
