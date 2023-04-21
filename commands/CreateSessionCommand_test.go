@@ -59,7 +59,7 @@ func (s *CreateSessionCommandTestSuite) TestInvalidUsername() {
 	a := assert.New(s.T())
 
 	a.NotNil(err)
-	a.IsType(err, httpErrors.Unauthorized())
+	a.IsType(httpErrors.Unauthorized(), err)
 }
 
 func (s *CreateSessionCommandTestSuite) TestInvalidPassword() {
@@ -82,5 +82,5 @@ func (s *CreateSessionCommandTestSuite) TestInvalidPassword() {
 	a := assert.New(s.T())
 
 	a.NotNil(err)
-	a.IsType(err, httpErrors.Unauthorized())
+	a.IsType(httpErrors.Unauthorized(), err)
 }

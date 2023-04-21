@@ -49,5 +49,5 @@ func (s *CreateManufacturerCommandTestSuite) TestNameAlreadyExists() {
 	a := assert.New(s.T())
 
 	a.NotNil(err)
-	a.IsType(err, httpErrors.Conflict())
+	a.IsType(httpErrors.Conflict(), err)
 }

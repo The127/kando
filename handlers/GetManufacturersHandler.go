@@ -29,7 +29,7 @@ func GetManufacturersHandler(w http.ResponseWriter, r *http.Request) {
 		Sorting:    sorting,
 	}
 
-	response, err := mediator.Send(m, request, r.Context())
+	response, err := mediator.Send[queries.GetManufacturersResponse](m, request, r.Context())
 	if err != nil {
 		rcs.Error(err)
 		return

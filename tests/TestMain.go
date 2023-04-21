@@ -31,6 +31,16 @@ func SetupTestDatabase(t *testing.T) *sql.DB {
 		panic(err)
 	}
 
+	err = connection.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	connection, err = db.ConnectToTestDatabase(dbName)
+	if err != nil {
+		panic(err)
+	}
+
 	return connection
 }
 
@@ -98,7 +108,6 @@ func (s *DbTestSuite) SetupTest() {
 }
 
 func (s *DbTestSuite) TearDownTest() {
-	log.Logger.Debugf("Tearing down test database for %s", s.T().Name())
 	if s.dbConn == nil {
 		return
 	}

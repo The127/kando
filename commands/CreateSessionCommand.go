@@ -33,14 +33,11 @@ func CreateSessionCommandHandler(command CreateSessionCommand, ctx context.Conte
 		return CreateSessionResponse{}, err
 	}
 
-	var userInfo struct {
-		Id             uuid.UUID
-		HashedPassword []byte
-		Salt           []byte
-	}
-	err = tx.QueryRow(`select "id", "hashed_password", "salt" from "public"."users" where username = $1`,
+	var userId uuid.UUID
+	var hashedPassword []byte
+	err = tx.QueryRow(`select "id", "hashed_password" from "public"."users" where username = $1`,
 		command.Username).
-		Scan(&userInfo.Id, &userInfo.HashedPassword, &userInfo.Salt)
+		Scan(&userId, &hashedPassword)
 	if err == sql.ErrNoRows {
 		return CreateSessionResponse{}, httpErrors.Unauthorized()
 	}
@@ -48,7 +45,7 @@ func CreateSessionCommandHandler(command CreateSessionCommand, ctx context.Conte
 		return CreateSessionResponse{}, err
 	}
 
-	err = bcrypt.CompareHashAndPassword(userInfo.HashedPassword, []byte(command.Password))
+	err = bcrypt.CompareHashAndPassword(hashedPassword, []byte(command.Password))
 	if err != nil {
 		return CreateSessionResponse{}, httpErrors.Unauthorized()
 	}
@@ -58,7 +55,7 @@ func CreateSessionCommandHandler(command CreateSessionCommand, ctx context.Conte
 			("user_id")
 			values ($1)
 			returning "id";`,
-		userInfo.Id).
+		userId).
 		Scan(&sessionId)
 	if err != nil {
 		return CreateSessionResponse{}, err
