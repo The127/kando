@@ -3,6 +3,7 @@ module kando-backend
 go 1.20
 
 require (
+	github.com/bxcodec/faker/v3 v3.8.1
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.8.0
 	github.com/huandu/go-sqlbuilder v1.21.0

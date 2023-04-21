@@ -3,6 +3,7 @@ package commands
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"kando-backend/fake"
 	"kando-backend/httpErrors"
 	"kando-backend/tests"
 	"testing"
@@ -39,6 +40,9 @@ func (s *CreateUserCommandTestSuite) TestUsernameAlreadyExists() {
 	// arrange
 	ctx := testContext(s.DbConn())
 
+	fake.User(s.DbConn(), fake.WithFields(
+		"username", "username"))
+
 	request := CreateUserCommand{
 		DisplayName: "DisplayName",
 		Username:    "username",
@@ -46,7 +50,6 @@ func (s *CreateUserCommandTestSuite) TestUsernameAlreadyExists() {
 	}
 
 	// act
-	_, _ = CreateUserCommandHandler(request, ctx)
 	_, err := CreateUserCommandHandler(request, ctx)
 
 	// assert
