@@ -1,20 +1,20 @@
 package tests
 
 import (
-	"context"
 	"database/sql"
 	"github.com/stretchr/testify/suite"
 	"kando-backend/db"
-	"kando-backend/ioc"
-	"kando-backend/services"
+	"kando-backend/log"
 	"strings"
+	"sync"
 	"testing"
 )
 
-var isTemplateDbInitialized bool = false
+var isTemplateDbInitialized = false
+var createTemplateDbLock = &sync.Mutex{}
 
 func SetupTestDatabase(t *testing.T) *sql.DB {
-	connection, err := db.ConnectToTestDatabase("")
+	connection, err := db.ConnectToTestDatabase("postgres")
 	if err != nil {
 		panic(err)
 	}
@@ -35,26 +35,42 @@ func SetupTestDatabase(t *testing.T) *sql.DB {
 }
 
 func setupTemplateDatabase() {
+	createTemplateDbLock.Lock()
 	if isTemplateDbInitialized {
 		return
 	}
 	isTemplateDbInitialized = true
+	createTemplateDbLock.Unlock()
 
-	connection, err := db.ConnectToTestDatabase("")
+	connection, err := db.ConnectToTestDatabase("postgres")
 	if err != nil {
 		panic(err)
 	}
 
+	log.Logger.Info("Dropping test_db_template")
 	_, err = connection.Exec(`drop database if exists "test_db_template";`)
 	if err != nil {
 		panic(err)
 	}
 
+	log.Logger.Info("Creating test_db_template")
 	_, err = connection.Exec(`create database "test_db_template" with owner "user";`)
 	if err != nil {
 		panic(err)
 	}
 
+	err = connection.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	log.Logger.Info("Connecting to test_db_template")
+	connection, err = db.ConnectToTestDatabase("test_db_template")
+	if err != nil {
+		panic(err)
+	}
+
+	log.Logger.Info("Migrating test_db_template")
 	db.MigrateDatabase(connection)
 
 	err = connection.Close()
@@ -77,10 +93,12 @@ func (s *DbTestSuite) SetupSuite() {
 }
 
 func (s *DbTestSuite) SetupTest() {
+	log.Logger.Debugf("Setting up test database for %s", s.T().Name())
 	s.dbConn = SetupTestDatabase(s.T())
 }
 
 func (s *DbTestSuite) TearDownTest() {
+	log.Logger.Debugf("Tearing down test database for %s", s.T().Name())
 	if s.dbConn == nil {
 		return
 	}
@@ -88,23 +106,4 @@ func (s *DbTestSuite) TearDownTest() {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func TestContext(dbConn *sql.DB) context.Context {
-	dpb := ioc.NewDependencyProviderBuilder()
-
-	ioc.AddSingleton(dpb, func(dp *ioc.DependencyProvider) *sql.DB {
-		return dbConn
-	})
-
-	ioc.AddScoped(dpb, func(dp *ioc.DependencyProvider) *services.RequestContextService {
-		return services.NewRequestContextService(dp)
-	})
-	ioc.AddCloseHandler[*services.RequestContextService](dpb, func(rcs *services.RequestContextService) error {
-		return rcs.Close()
-	})
-
-	dp := dpb.Build()
-
-	return context.WithValue(context.TODO(), "scope", dp)
 }

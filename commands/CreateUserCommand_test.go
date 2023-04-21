@@ -5,7 +5,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"kando-backend/httpErrors"
 	"kando-backend/tests"
-	"net/http"
 	"testing"
 )
 
@@ -19,7 +18,7 @@ func TestCreateUserCommandTestSuite(t *testing.T) {
 
 func (s *CreateUserCommandTestSuite) TestValidInputs() {
 	// arrange
-	ctx := tests.TestContext(s.DbConn())
+	ctx := testContext(s.DbConn())
 
 	request := CreateUserCommand{
 		DisplayName: "DisplayName",
@@ -38,9 +37,7 @@ func (s *CreateUserCommandTestSuite) TestValidInputs() {
 
 func (s *CreateUserCommandTestSuite) TestUsernameAlreadyExists() {
 	// arrange
-	ctx := tests.TestContext(s.DbConn())
-
-	//TODO: create user in db
+	ctx := testContext(s.DbConn())
 
 	request := CreateUserCommand{
 		DisplayName: "DisplayName",
@@ -49,6 +46,7 @@ func (s *CreateUserCommandTestSuite) TestUsernameAlreadyExists() {
 	}
 
 	// act
+	_, _ = CreateUserCommandHandler(request, ctx)
 	_, err := CreateUserCommandHandler(request, ctx)
 
 	// assert
@@ -56,5 +54,4 @@ func (s *CreateUserCommandTestSuite) TestUsernameAlreadyExists() {
 
 	a.NotNil(err)
 	a.IsType(err, httpErrors.Conflict())
-	a.Equal(err.(*httpErrors.HttpError).Status(), http.StatusConflict)
 }

@@ -24,7 +24,6 @@ func DeleteSessionCommandHandler(command DeleteSessionCommand, scope *ioc.Depend
 		return false, err
 	}
 
-	err = rcs.CommitTx()
 	if err != nil {
 		return false, err
 	}

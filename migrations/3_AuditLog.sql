@@ -57,7 +57,8 @@ create table if not exists "audit_logs"
     primary key ("id")
 );
 
-select set_table_metadata('db_object_metadata', 'no_audit', 'true');
+select set_table_metadata('__migrations', 'no_audit', 'true', 'public');
+select set_table_metadata('db_object_metadata', 'no_audit', 'true', 'public');
 select set_table_metadata('audit_logs', 'no_audit', 'true');
 
 create or replace function create_insert_audit_log_entries()
@@ -159,7 +160,7 @@ begin
     "table_schema" = split_part("full_table_name", '.', 1);
     "table_name" = split_part("full_table_name", '.', 2);
 
-    if get_table_metadata("table_name", 'no_audit', "table_schema") is not null then
+    if get_table_metadata("table_name", 'no_audit', "table_schema") = 'true' then
         return;
     end if;
 
@@ -190,9 +191,9 @@ begin
     end if;
 
     for "row" in
-        select * from pg_event_trigger_ddl_commands()
+        select * from pg_event_trigger_ddl_commands() where "object_type" = 'table'
         loop
-            select create_audit_log_triggers_for_table("row".object_identity);
+            perform create_audit_log_triggers_for_table("row".object_identity);
         end loop;
 end;
 $$;

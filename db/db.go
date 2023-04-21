@@ -45,16 +45,15 @@ func connectToDatabase(host string,
 	password string,
 	database string,
 	sslMode string) (*sql.DB, error) {
-	connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s sslmode=%s",
+	connectionString := fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=%s",
 		host,
 		port,
+		database,
 		user,
 		password,
 		sslMode)
 
-	if database != "" {
-		connectionString += fmt.Sprintf(" dbname=%s", database)
-	}
+	log.Logger.Debugf("Connecting to: %s:%d/%s", host, port, database)
 
 	return sql.Open("postgres", connectionString)
 }

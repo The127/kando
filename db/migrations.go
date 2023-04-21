@@ -28,6 +28,11 @@ func ensureMigrationTableExists(dbConnection *sql.DB) {
 func applyMissingMigrations(dbConnection *sql.DB) {
 	migrationFilePaths := getMigrationFilePaths()
 	appliedMigrations := getAppliedMigrationNames(dbConnection)
+
+	for _, appliedMigration := range appliedMigrations {
+		log.Logger.Debugf("Migration %s already applied", appliedMigration)
+	}
+
 	var missingMigrationFilePaths []string
 
 	for _, migrationFilePath := range migrationFilePaths {
@@ -115,7 +120,12 @@ func getAppliedMigrationNames(dbConnection *sql.DB) []string {
 	if err != nil {
 		log.Logger.Fatalf("Failed to query applied migrations: %v", err)
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			log.Logger.Fatalf("Failed to close rows: %v", err)
+		}
+	}(rows)
 
 	var appliedMigrations []string
 
