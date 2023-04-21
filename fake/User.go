@@ -10,7 +10,7 @@ import (
 func User(db *sql.DB, fields *FieldValues) uuid.UUID {
 	id := uuid.New()
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(get(fields, "password", "password")), bcrypt.MinCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(get(fields, "password", faker.Password())), bcrypt.MinCost)
 	if err != nil {
 		panic(err)
 	}

@@ -4,6 +4,12 @@ type FieldValues struct {
 	Values map[string]any
 }
 
+func WithDefaults() *FieldValues {
+	return &FieldValues{
+		Values: make(map[string]any),
+	}
+}
+
 func WithFields(fieldValues ...any) *FieldValues {
 	if len(fieldValues)%2 != 0 {
 		panic("Fields must be called with an even number of arguments")

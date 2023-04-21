@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"github.com/huandu/go-sqlbuilder"
 	"kando-backend/ioc"
+	"kando-backend/log"
 	"kando-backend/middlewares"
 )
 
@@ -37,7 +38,9 @@ func GetManufacturersQueryHandler(query GetManufacturersQuery, ctx context.Conte
 	sb.Limit(query.Paging.PageSize).
 		Offset(query.Paging.PageSize * (query.Paging.PageNumber - 1))
 
-	rows, err := db.Query(sb.Build())
+	sqlString, args := sb.Build()
+	log.Logger.Debugf("executing sql: %s", sqlString)
+	rows, err := db.Query(sqlString, args...)
 	if err != nil {
 		return PagedResponse[GetManufacturersResponse]{}, err
 	}
