@@ -155,3 +155,7 @@ func RequestHeaderFieldsTooLarge() *HttpError {
 func UnavailableForLegalReasons() *HttpError {
 	return NewHttpError(http.StatusUnavailableForLegalReasons)
 }
+
+func InternalServerError() *HttpError {
+	return NewHttpError(http.StatusInternalServerError)
+}

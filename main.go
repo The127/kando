@@ -9,6 +9,7 @@ import (
 	"kando-backend/ioc"
 	"kando-backend/log"
 	"kando-backend/mediator"
+	"kando-backend/queries"
 	"kando-backend/server"
 	"kando-backend/services"
 	"os"
@@ -54,6 +55,7 @@ func configureServices(dbConnection *sql.DB) *ioc.DependencyProvider {
 		mediator.RegisterHandler(m, commands.CreateSessionCommandHandler)
 
 		mediator.RegisterHandler(m, commands.CreateManufacturerCommandHandler)
+		mediator.RegisterHandler(m, queries.GetManufacturersQueryHandler)
 
 		return m
 	})

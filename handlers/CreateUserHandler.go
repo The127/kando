@@ -42,7 +42,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	m := ioc.Get[*mediator.Mediator](scope)
 
 	var dto CreateUserRequestDto
-	err := utils.DecodeJson(r.Body, &dto)
+	err := utils.ReadJson(r.Body, &dto)
 	if err != nil {
 		rcs.Error(err)
 		return

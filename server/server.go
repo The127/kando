@@ -41,6 +41,10 @@ func ServeApi(dp *ioc.DependencyProvider) {
 	sessions := api.PathPrefix("/sessions").Subrouter()
 	sessions.HandleFunc("/", handlers.DeleteSessionHandler).Methods("DELETE")
 
+	manufacturers := api.PathPrefix("/manufacturers").Subrouter()
+	manufacturers.HandleFunc("/", handlers.CreateManufacturerHandler).Methods("POST")
+	manufacturers.HandleFunc("/", handlers.GetManufacturersHandler).Methods("GET")
+
 	srv := &http.Server{
 		Handler:      r,
 		Addr:         fmt.Sprintf("%s:%d", config.C.Server.Host, config.C.Server.Port),

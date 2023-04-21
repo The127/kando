@@ -5,20 +5,27 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"kando-backend/httpErrors"
 	"net/http"
 	"strings"
 )
 
-type malformedRequest struct {
-	status int
-	msg    string
+func WriteJson(w http.ResponseWriter, src interface{}) error {
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+
+	err := enc.Encode(src)
+
+	if err != nil {
+		return httpErrors.InternalServerError().WithMessage("Error encoding JSON")
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	return nil
 }
 
-func (mr *malformedRequest) Error() string {
-	return mr.msg
-}
-
-func DecodeJson(r io.Reader, dst interface{}) error {
+func ReadJson(r io.Reader, dst interface{}) error {
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
 
@@ -31,28 +38,28 @@ func DecodeJson(r io.Reader, dst interface{}) error {
 		switch {
 		case errors.As(err, &syntaxError):
 			msg := fmt.Sprintf("Request body contains badly-formed JSON (at position %d)", syntaxError.Offset)
-			return &malformedRequest{status: http.StatusBadRequest, msg: msg}
+			return httpErrors.BadRequest().WithMessage(msg)
 
 		case errors.Is(err, io.ErrUnexpectedEOF):
 			msg := fmt.Sprintf("Request body contains badly-formed JSON")
-			return &malformedRequest{status: http.StatusBadRequest, msg: msg}
+			return httpErrors.BadRequest().WithMessage(msg)
 
 		case errors.As(err, &unmarshalTypeError):
 			msg := fmt.Sprintf("Request body contains an invalid value for the %q field (at position %d)", unmarshalTypeError.Field, unmarshalTypeError.Offset)
-			return &malformedRequest{status: http.StatusBadRequest, msg: msg}
+			return httpErrors.BadRequest().WithMessage(msg)
 
 		case strings.HasPrefix(err.Error(), "json: unknown field "):
 			fieldName := strings.TrimPrefix(err.Error(), "json: unknown field ")
 			msg := fmt.Sprintf("Request body contains unknown field %s", fieldName)
-			return &malformedRequest{status: http.StatusBadRequest, msg: msg}
+			return httpErrors.BadRequest().WithMessage(msg)
 
 		case errors.Is(err, io.EOF):
 			msg := "Request body must not be empty"
-			return &malformedRequest{status: http.StatusBadRequest, msg: msg}
+			return httpErrors.BadRequest().WithMessage(msg)
 
 		case err.Error() == "http: request body too large":
 			msg := "Request body must not be larger than 1MB"
-			return &malformedRequest{status: http.StatusRequestEntityTooLarge, msg: msg}
+			return httpErrors.PayloadTooLarge().WithMessage(msg)
 
 		default:
 			return err
@@ -62,7 +69,7 @@ func DecodeJson(r io.Reader, dst interface{}) error {
 	err = dec.Decode(&struct{}{})
 	if err != io.EOF {
 		msg := "Request body must only contain a single JSON object"
-		return &malformedRequest{status: http.StatusBadRequest, msg: msg}
+		return httpErrors.BadRequest().WithMessage(msg)
 	}
 
 	return nil
