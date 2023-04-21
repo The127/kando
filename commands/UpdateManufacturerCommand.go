@@ -8,11 +8,12 @@ import (
 	"kando-backend/services"
 )
 
-type DeleteSessionCommand struct {
-	SessionId uuid.UUID
+type UpdateManufacturerCommand struct {
+	Id   uuid.UUID
+	Name string
 }
 
-func DeleteSessionCommandHandler(command DeleteSessionCommand, ctx context.Context) (any, error) {
+func UpdateManufacturerHandler(command UpdateManufacturerCommand, ctx context.Context) (any, error) {
 	scope := middlewares.GetScope(ctx)
 	rcs := ioc.Get[*services.RequestContextService](scope)
 
@@ -21,8 +22,10 @@ func DeleteSessionCommandHandler(command DeleteSessionCommand, ctx context.Conte
 		return false, err
 	}
 
-	_, err = tx.Exec(`delete from "public"."sesions" where "id" = $1`,
-		command.SessionId)
+	_, err = tx.Exec(`update "public"."manufacturers" set 
+                                    "name" = $1 
+                                where "id" = $2`,
+		command.Name, command.Id)
 	if err != nil {
 		return false, err
 	}

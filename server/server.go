@@ -44,6 +44,7 @@ func ServeApi(dp *ioc.DependencyProvider) {
 	manufacturers := api.PathPrefix("/manufacturers").Subrouter()
 	manufacturers.HandleFunc("/", handlers.CreateManufacturerHandler).Methods("POST")
 	manufacturers.HandleFunc("/", handlers.GetManufacturersHandler).Methods("GET")
+	manufacturers.HandleFunc("/{manufacturerId}/", handlers.UpdateManufacturerHandler).Methods("GET")
 
 	srv := &http.Server{
 		Handler:      r,
@@ -52,11 +53,7 @@ func ServeApi(dp *ioc.DependencyProvider) {
 		ReadTimeout:  config.C.Server.ReadTimeout,
 	}
 
-	go func() {
-		if err := srv.ListenAndServe(); err != nil {
-			log.Logger.Fatalf("Failed to serve api: %v", err)
-		}
-	}()
+	go serve(srv)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -68,5 +65,11 @@ func ServeApi(dp *ioc.DependencyProvider) {
 	err := srv.Shutdown(ctx)
 	if err != nil {
 		panic(err)
+	}
+}
+
+func serve(srv *http.Server) {
+	if err := srv.ListenAndServe(); err != nil {
+		log.Logger.Fatalf("Failed to serve api: %v", err)
 	}
 }
