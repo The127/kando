@@ -50,7 +50,10 @@ func configureServices(dbConnection *sql.DB) *ioc.DependencyProvider {
 		mediator.RegisterBehaviour[any](m, behaviours.LoggingBehaviour)
 
 		mediator.RegisterHandler(m, commands.CreateUserCommandHandler)
+
 		mediator.RegisterHandler(m, commands.CreateSessionCommandHandler)
+
+		mediator.RegisterHandler(m, commands.CreateManufacturerCommandHandler)
 
 		return m
 	})
