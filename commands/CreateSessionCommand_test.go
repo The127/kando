@@ -22,12 +22,12 @@ func (s *CreateSessionCommandTestSuite) TestValidInputs() {
 	ctx := testContext(s.DbConn())
 
 	fake.User(s.DbConn(), fake.WithFields(
-		"username", "username",
-		"hashed_password", "password"))
+		"username", "testuser",
+		"password", "testpassword"))
 
 	request := CreateSessionCommand{
-		Username: "username",
-		Password: "password",
+		Username: "testuser",
+		Password: "testpassword",
 	}
 
 	// act
@@ -44,12 +44,12 @@ func (s *CreateSessionCommandTestSuite) TestInvalidUsername() {
 	ctx := testContext(s.DbConn())
 
 	fake.User(s.DbConn(), fake.WithFields(
-		"username", "username",
-		"password", "password"))
+		"username", "testuser",
+		"password", "testpassword"))
 
 	request := CreateSessionCommand{
-		Username: "wrongUsername",
-		Password: "password",
+		Username: "wronguser",
+		Password: "testpassword",
 	}
 
 	// act
@@ -67,11 +67,11 @@ func (s *CreateSessionCommandTestSuite) TestInvalidPassword() {
 	ctx := testContext(s.DbConn())
 
 	fake.User(s.DbConn(), fake.WithFields(
-		"username", "username",
-		"password", "password"))
+		"username", "testuser",
+		"password", "testpassword"))
 
 	request := CreateSessionCommand{
-		Username: "username",
+		Username: "testuser",
 		Password: "wrongPassword",
 	}
 

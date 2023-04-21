@@ -24,10 +24,10 @@ func WithFields(fieldValues ...any) *FieldValues {
 	}
 }
 
-func get[TValue any](fvs *FieldValues, field string, alternative TValue) TValue {
+func get[TValue any](fvs *FieldValues, field string, defaultValue TValue) TValue {
 	value, ok := fvs.Values[field]
 	if !ok {
-		value = alternative
+		value = defaultValue
 	}
 	return value.(TValue)
 }
