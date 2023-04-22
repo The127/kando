@@ -44,7 +44,7 @@ func CreateAssetTypeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request := commands.CreateAssetUTypeCommand{
+	request := commands.CreateAssetTypeCommand{
 		Name: dto.Name,
 	}
 
