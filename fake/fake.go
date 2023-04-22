@@ -1,12 +1,12 @@
 package fake
 
 type FieldValues struct {
-	Values map[string]any
+	values map[string]any
 }
 
 func WithDefaults() *FieldValues {
 	return &FieldValues{
-		Values: make(map[string]any),
+		values: make(map[string]any),
 	}
 }
 
@@ -26,12 +26,12 @@ func WithFields(fieldValues ...any) *FieldValues {
 	}
 
 	return &FieldValues{
-		Values: fields,
+		values: fields,
 	}
 }
 
 func get[TValue any](fvs *FieldValues, field string, defaultValue TValue) TValue {
-	value, ok := fvs.Values[field]
+	value, ok := fvs.values[field]
 	if !ok {
 		value = defaultValue
 	}

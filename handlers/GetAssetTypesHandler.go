@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-func GetManufacturersHandler(w http.ResponseWriter, r *http.Request) {
+func GetAssetTypesHandler(w http.ResponseWriter, r *http.Request) {
 	scope := middlewares.GetScope(r.Context())
 
 	rcs := ioc.Get[*services.RequestContextService](scope)
@@ -22,11 +22,11 @@ func GetManufacturersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request := queries.GetManufacturersQuery{
+	request := queries.GetAssetTypesQuery{
 		QueryBase: query,
 	}
 
-	response, err := mediator.Send[queries.GetManufacturersResponse](m, request, r.Context())
+	response, err := mediator.Send[queries.GetAssetTypesResponse](m, request, r.Context())
 	if err != nil {
 		rcs.Error(err)
 		return

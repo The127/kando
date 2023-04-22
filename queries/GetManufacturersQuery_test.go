@@ -21,12 +21,14 @@ func (suite *GetManufacturersQueryTestSuite) TestNoMatches() {
 	ctx := testContext(suite.DbConn())
 
 	request := GetManufacturersQuery{
-		Paging: PagingInfo{
-			PageSize:   10,
-			PageNumber: 0,
+		QueryBase{
+			Paging: PaginationInfo{
+				PageSize:   10,
+				PageNumber: 0,
+			},
+			Sorting:    nil,
+			SearchText: "",
 		},
-		Sorting:    nil,
-		SearchText: "",
 	}
 
 	// act
@@ -48,12 +50,14 @@ func (suite *GetManufacturersQueryTestSuite) TestSingleMatch() {
 	fake.Manufacturer(suite.DbConn(), fake.WithDefaults())
 
 	request := GetManufacturersQuery{
-		Paging: PagingInfo{
-			PageSize:   10,
-			PageNumber: 0,
+		QueryBase{
+			Paging: PaginationInfo{
+				PageSize:   10,
+				PageNumber: 0,
+			},
+			Sorting:    nil,
+			SearchText: "",
 		},
-		Sorting:    nil,
-		SearchText: "",
 	}
 
 	// act
@@ -78,12 +82,14 @@ func (suite *GetManufacturersQueryTestSuite) TestMultipleMatches() {
 	}
 
 	request := GetManufacturersQuery{
-		Paging: PagingInfo{
-			PageSize:   10,
-			PageNumber: 0,
+		QueryBase{
+			Paging: PaginationInfo{
+				PageSize:   10,
+				PageNumber: 0,
+			},
+			Sorting:    nil,
+			SearchText: "",
 		},
-		Sorting:    nil,
-		SearchText: "",
 	}
 
 	// act
@@ -98,7 +104,7 @@ func (suite *GetManufacturersQueryTestSuite) TestMultipleMatches() {
 	a.Equal(expectedCount, len(result.Data))
 }
 
-func (suite *GetManufacturersQueryTestSuite) TestPaging() {
+func (suite *GetManufacturersQueryTestSuite) TestPagination() {
 	// arrange
 	ctx := testContext(suite.DbConn())
 
@@ -108,12 +114,14 @@ func (suite *GetManufacturersQueryTestSuite) TestPaging() {
 	}
 
 	request := GetManufacturersQuery{
-		Paging: PagingInfo{
-			PageSize:   expectedCount,
-			PageNumber: 0,
+		QueryBase{
+			Paging: PaginationInfo{
+				PageSize:   expectedCount,
+				PageNumber: 0,
+			},
+			Sorting:    nil,
+			SearchText: "",
 		},
-		Sorting:    nil,
-		SearchText: "",
 	}
 
 	// act

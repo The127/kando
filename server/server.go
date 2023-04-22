@@ -44,7 +44,12 @@ func ServeApi(dp *ioc.DependencyProvider) {
 	manufacturers := api.PathPrefix("/manufacturers").Subrouter()
 	manufacturers.HandleFunc("/", handlers.CreateManufacturerHandler).Methods("POST")
 	manufacturers.HandleFunc("/", handlers.GetManufacturersHandler).Methods("GET")
-	manufacturers.HandleFunc("/{manufacturerId}/", handlers.UpdateManufacturerHandler).Methods("GET")
+	manufacturers.HandleFunc("/{manufacturerId}/", handlers.UpdateManufacturerHandler).Methods("PUT")
+
+	assetTypes := api.PathPrefix("/asset-types").Subrouter()
+	assetTypes.HandleFunc("/", handlers.CreateAssetTypeHandler).Methods("POST")
+	assetTypes.HandleFunc("/", handlers.GetAssetTypesHandler).Methods("GET")
+	assetTypes.HandleFunc("/{assetTypeId}/", handlers.UpdateAssetTypeHandler).Methods("PUT")
 
 	srv := &http.Server{
 		Handler:      r,

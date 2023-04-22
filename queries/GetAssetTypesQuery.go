@@ -9,21 +9,21 @@ import (
 	"kando-backend/middlewares"
 )
 
-type GetManufacturersQuery struct {
+type GetAssetTypesQuery struct {
 	QueryBase
 }
 
-type GetManufacturersResponse struct {
+type GetAssetTypesResponse struct {
 	Name string
 }
 
-func GetManufacturersQueryHandler(query GetManufacturersQuery, ctx context.Context) (PagedResponse[GetManufacturersResponse], error) {
+func GetAssetTypesQueryHandler(query GetAssetTypesQuery, ctx context.Context) (PagedResponse[GetAssetTypesResponse], error) {
 	scope := middlewares.GetScope(ctx)
 
 	db := ioc.Get[*sql.DB](scope)
 
 	sb := sqlbuilder.Select("count(*) over()", "name").
-		From("manufacturers")
+		From("asset_types")
 
 	if query.SearchText != "" {
 		sb.Where(sb.Some("name", "ilike", query.SearchText))
@@ -40,22 +40,22 @@ func GetManufacturersQueryHandler(query GetManufacturersQuery, ctx context.Conte
 	log.Logger.Debugf("executing sql: %s", sqlString)
 	rows, err := db.Query(sqlString, args...)
 	if err != nil {
-		return PagedResponse[GetManufacturersResponse]{}, err
+		return PagedResponse[GetAssetTypesResponse]{}, err
 	}
 	defer rows.Close()
 
 	var totalCount int
-	var result []GetManufacturersResponse
+	var result []GetAssetTypesResponse
 	for rows.Next() {
-		var row GetManufacturersResponse
+		var row GetAssetTypesResponse
 		err := rows.Scan(&totalCount, &row.Name)
 		if err != nil {
-			return PagedResponse[GetManufacturersResponse]{}, err
+			return PagedResponse[GetAssetTypesResponse]{}, err
 		}
 		result = append(result, row)
 	}
 
-	return PagedResponse[GetManufacturersResponse]{
+	return PagedResponse[GetAssetTypesResponse]{
 		TotalCount: totalCount,
 		Data:       result,
 	}, nil
