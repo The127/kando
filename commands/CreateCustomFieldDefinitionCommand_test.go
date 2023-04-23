@@ -18,21 +18,27 @@ func TestRunCreateCustomFieldDefinitionCommandTestSuite(t *testing.T) {
 
 func (suite *CreateCustomFieldDefinitionCommandTestSuite) TestValidInputs() {
 	// arrange
-	ctx := testContext(suite.DbConn())
+	ctx := startTestContext(suite.DbConn())
 
-	assetTypeId := fake.AssetType(suite.DbConn(), fake.WithDefaults())
+	assetTypeId := fake.AssetType(suite.DbConn(), fake.WithDefaults()).Id()
 
 	request := CreateCustomFieldDefinitionCommand{
 		AssetTypeId: assetTypeId,
 		Name:        "Test Field",
-		Type:        "string",
+		FieldType:   "text",
 	}
 
 	// act
-	_, err := CreateCustomFieldDefinitionCommandHandler(request, ctx)
+	response, err := CreateCustomFieldDefinitionCommandHandler(request, ctx)
+	closeTestContext(ctx)
 
 	// assert
 	a := assert.New(suite.T())
 
 	a.Nil(err)
+
+	a.True(fake.CustomFieldDefinitionExists(suite.DbConn(), assetTypeId, fake.WithFields(
+		"name", request.Name,
+		"field_type", request.FieldType,
+	).WithId(response.Id)))
 }

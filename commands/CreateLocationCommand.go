@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"kando-backend/httpErrors"
 	"kando-backend/ioc"
 	"kando-backend/middlewares"
@@ -12,14 +13,18 @@ type CreateLocationCommand struct {
 	Name string
 }
 
-func CreateLocationCommandHandler(command CreateLocationCommand, ctx context.Context) (any, error) {
+type CreateLocationResponse struct {
+	Id uuid.UUID
+}
+
+func CreateLocationCommandHandler(command CreateLocationCommand, ctx context.Context) (CreateLocationResponse, error) {
 	scope := middlewares.GetScope(ctx)
 
 	rcs := ioc.Get[*services.RequestContextService](scope)
 
 	tx, err := rcs.GetTx()
 	if err != nil {
-		return false, err
+		return CreateLocationResponse{}, err
 	}
 
 	var locationExists bool
@@ -27,20 +32,24 @@ func CreateLocationCommandHandler(command CreateLocationCommand, ctx context.Con
 		command.Name).
 		Scan(&locationExists)
 	if err != nil {
-		return false, err
+		return CreateLocationResponse{}, err
 	}
 
 	if locationExists {
-		return false, httpErrors.Conflict().WithMessage("location already exists")
+		return CreateLocationResponse{}, httpErrors.Conflict().WithMessage("location already exists")
 	}
 
-	_, err = tx.Exec(`insert into "public"."locations"
+	var id uuid.UUID
+	err = tx.QueryRow(`insert into "public"."locations"
     			("name")
-    			values ($1)`,
-		command.Name)
+    			values ($1)
+    			returning id`,
+		command.Name).Scan(&id)
 	if err != nil {
-		return false, err
+		return CreateLocationResponse{}, err
 	}
 
-	return true, nil
+	return CreateLocationResponse{
+		Id: id,
+	}, nil
 }

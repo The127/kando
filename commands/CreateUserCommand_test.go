@@ -19,7 +19,7 @@ func TestCreateUserCommandTestSuite(t *testing.T) {
 
 func (s *CreateUserCommandTestSuite) TestValidInputs() {
 	// arrange
-	ctx := testContext(s.DbConn())
+	ctx := startTestContext(s.DbConn())
 
 	request := CreateUserCommand{
 		DisplayName: "DisplayName",
@@ -28,17 +28,24 @@ func (s *CreateUserCommandTestSuite) TestValidInputs() {
 	}
 
 	// act
-	_, err := CreateUserCommandHandler(request, ctx)
+	response, err := CreateUserCommandHandler(request, ctx)
+
+	closeTestContext(ctx)
 
 	// assert
 	a := assert.New(s.T())
 
 	a.Nil(err)
+
+	a.True(fake.UserExists(s.DbConn(), fake.WithFields(
+		"username", request.Username,
+		"display_name", request.DisplayName,
+	).WithId(response.Id)))
 }
 
 func (s *CreateUserCommandTestSuite) TestUsernameAlreadyExists() {
 	// arrange
-	ctx := testContext(s.DbConn())
+	ctx := startTestContext(s.DbConn())
 
 	fake.User(s.DbConn(), fake.WithFields(
 		"username", "username"))
@@ -51,6 +58,8 @@ func (s *CreateUserCommandTestSuite) TestUsernameAlreadyExists() {
 
 	// act
 	_, err := CreateUserCommandHandler(request, ctx)
+
+	closeTestContext(ctx)
 
 	// assert
 	a := assert.New(s.T())

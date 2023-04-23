@@ -11,40 +11,48 @@ import (
 
 type CreateCustomFieldDefinitionCommand struct {
 	Name        string
-	Type        string
+	FieldType   string
 	AssetTypeId uuid.UUID
 }
 
-func CreateCustomFieldDefinitionCommandHandler(command CreateCustomFieldDefinitionCommand, ctx context.Context) (any, error) {
+type CreateCustomFieldDefinitionResponse struct {
+	Id uuid.UUID
+}
+
+func CreateCustomFieldDefinitionCommandHandler(command CreateCustomFieldDefinitionCommand, ctx context.Context) (CreateCustomFieldDefinitionResponse, error) {
 	scope := middlewares.GetScope(ctx)
 
 	rcs := ioc.Get[*services.RequestContextService](scope)
 
 	tx, err := rcs.GetTx()
 	if err != nil {
-		return false, err
+		return CreateCustomFieldDefinitionResponse{}, err
 	}
 
 	var customFieldDefinitionExists bool
-	err = tx.QueryRow(`select exists(select exists(select 1 from "public"."custom_field_definitions" where "name" = $1 and "asset_type_id" = $2))`,
+	err = tx.QueryRow(`select exists(select 1 from "public"."custom_field_definitions" where "name" = $1 and "asset_type_id" = $2)`,
 		command.Name, command.AssetTypeId).
 		Scan(&customFieldDefinitionExists)
 	if err != nil {
-		return false, err
+		return CreateCustomFieldDefinitionResponse{}, err
 	}
 
 	if customFieldDefinitionExists {
-		return false, httpErrors.Conflict().WithMessage("custom field definition already exists")
+		return CreateCustomFieldDefinitionResponse{}, httpErrors.Conflict().WithMessage("custom field definition already exists")
 	}
 
-	_, err = tx.Exec(`insert into "public"."custom_field_definitions"
+	var id uuid.UUID
+	err = tx.QueryRow(`insert into "public"."custom_field_definitions"
     			("name", "type", "asset_type_id")
-    			values ($1, $2, $3)`,
-		command.Name, command.Type, command.AssetTypeId)
+    			values ($1, $2, $3)
+    			returning id`,
+		command.Name, command.FieldType, command.AssetTypeId).Scan(&id)
 	if err != nil {
-		return false, err
+		return CreateCustomFieldDefinitionResponse{}, err
 	}
 
-	return true, nil
+	return CreateCustomFieldDefinitionResponse{
+		Id: id,
+	}, nil
 
 }

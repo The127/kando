@@ -18,11 +18,11 @@ func TestRunCreateAssetCommandTestSuite(t *testing.T) {
 
 func (suite *CreateAssetCommandTestSuite) TestValidInputs() {
 	// arrange
-	ctx := testContext(suite.DbConn())
+	ctx := startTestContext(suite.DbConn())
 
-	assetTypeId := fake.AssetType(suite.DbConn(), fake.WithDefaults())
-	manufacturerId := fake.Manufacturer(suite.DbConn(), fake.WithDefaults())
-	parentId := fake.Asset(suite.DbConn(), &manufacturerId, &assetTypeId, nil, fake.WithDefaults())
+	assetTypeId := fake.AssetType(suite.DbConn(), fake.WithDefaults()).Id()
+	manufacturerId := fake.Manufacturer(suite.DbConn(), fake.WithDefaults()).Id()
+	parentId := fake.Asset(suite.DbConn(), &manufacturerId, &assetTypeId, nil, fake.WithDefaults()).Id()
 
 	serialNUmber := "S1234567890"
 	batchNumber := "B1234567890"
@@ -36,10 +36,18 @@ func (suite *CreateAssetCommandTestSuite) TestValidInputs() {
 	}
 
 	// act
-	_, err := CreateAssetCommandHandler(request, ctx)
+	response, err := CreateAssetCommandHandler(request, ctx)
+
+	closeTestContext(ctx)
 
 	// assert
 	a := assert.New(suite.T())
 
 	a.Nil(err)
+
+	a.True(fake.AssetExists(suite.DbConn(), &manufacturerId, &assetTypeId, &parentId, fake.WithFields(
+		"name", request.Name,
+		"serial_number", *request.SerialNumber,
+		"batch_number", *request.BatchNumber,
+	).WithId(response.Id)))
 }

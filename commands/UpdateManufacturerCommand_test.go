@@ -16,9 +16,9 @@ func (s *UpdateManufacturerCommandTestSuite) TestRunUpdateManufacturerCommandTes
 
 func (s *UpdateManufacturerCommandTestSuite) TestValidInputs() {
 	// arrange
-	ctx := testContext(s.DbConn())
+	ctx := startTestContext(s.DbConn())
 
-	manufacturerId := fake.Manufacturer(s.DbConn(), fake.WithDefaults())
+	manufacturerId := fake.Manufacturer(s.DbConn(), fake.WithDefaults()).Id()
 
 	request := UpdateManufacturerCommand{
 		Id:   manufacturerId,
@@ -28,8 +28,14 @@ func (s *UpdateManufacturerCommandTestSuite) TestValidInputs() {
 	// act
 	_, err := UpdateManufacturerHandler(request, ctx)
 
+	closeTestContext(ctx)
+
 	// assert
 	a := s.Assert()
 
 	a.Nil(err)
+
+	a.True(fake.ManufacturerExists(s.DbConn(), fake.WithFields(
+		"name", request.Name,
+	).WithId(request.Id)))
 }

@@ -24,7 +24,7 @@ func Manufacturer(db *sql.DB, overwrites *FieldValues) *FieldValues {
 		panic(err)
 	}
 
-	return fields.Merge(withId(id))
+	return fields.WithId(id)
 }
 
 func ManufacturerExists(db *sql.DB, overwrites *FieldValues) bool {

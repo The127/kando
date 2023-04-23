@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"kando-backend/httpErrors"
 	"kando-backend/ioc"
 	"kando-backend/middlewares"
@@ -12,14 +13,18 @@ type CreateAssetTypeCommand struct {
 	Name string
 }
 
-func CreateAssetTypeCommandHandler(command CreateAssetTypeCommand, ctx context.Context) (any, error) {
+type CreateAssetTypeResponse struct {
+	Id uuid.UUID
+}
+
+func CreateAssetTypeCommandHandler(command CreateAssetTypeCommand, ctx context.Context) (CreateAssetTypeResponse, error) {
 	scope := middlewares.GetScope(ctx)
 
 	rcs := ioc.Get[*services.RequestContextService](scope)
 
 	tx, err := rcs.GetTx()
 	if err != nil {
-		return false, err
+		return CreateAssetTypeResponse{}, err
 	}
 
 	var assetTypeExists bool
@@ -27,20 +32,24 @@ func CreateAssetTypeCommandHandler(command CreateAssetTypeCommand, ctx context.C
 		command.Name).
 		Scan(&assetTypeExists)
 	if err != nil {
-		return false, err
+		return CreateAssetTypeResponse{}, err
 	}
 
 	if assetTypeExists {
-		return false, httpErrors.Conflict().WithMessage("asset type already exists")
+		return CreateAssetTypeResponse{}, httpErrors.Conflict().WithMessage("asset type already exists")
 	}
 
-	_, err = tx.Exec(`insert into "public"."asset_types"
+	var id uuid.UUID
+	err = tx.QueryRow(`insert into "public"."asset_types"
     			("name")
-    			values ($1)`,
-		command.Name)
+    			values ($1)
+    			returning id`,
+		command.Name).Scan(&id)
 	if err != nil {
-		return false, err
+		return CreateAssetTypeResponse{}, err
 	}
 
-	return true, nil
+	return CreateAssetTypeResponse{
+		Id: id,
+	}, nil
 }

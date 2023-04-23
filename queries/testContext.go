@@ -32,3 +32,13 @@ func testContext(dbConn *sql.DB) context.Context {
 
 	return context.WithValue(context.TODO(), "scope", dp)
 }
+
+func closeTestContext(ctx context.Context) {
+	dp := ctx.Value("scope").(*ioc.DependencyProvider)
+
+	errors := dp.Close()
+
+	if len(errors) > 0 {
+		panic(errors)
+	}
+}

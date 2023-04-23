@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"kando-backend/events"
 	"kando-backend/httpErrors"
@@ -17,7 +18,11 @@ type CreateUserCommand struct {
 	Password    string
 }
 
-func CreateUserCommandHandler(command CreateUserCommand, ctx context.Context) (any, error) {
+type CreateUserResponse struct {
+	Id uuid.UUID
+}
+
+func CreateUserCommandHandler(command CreateUserCommand, ctx context.Context) (CreateUserResponse, error) {
 	scope := middlewares.GetScope(ctx)
 
 	m := ioc.Get[*mediator.Mediator](scope)
@@ -25,12 +30,12 @@ func CreateUserCommandHandler(command CreateUserCommand, ctx context.Context) (a
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(command.Password), bcrypt.MinCost)
 	if err != nil {
-		return false, err
+		return CreateUserResponse{}, err
 	}
 
 	tx, err := rcs.GetTx()
 	if err != nil {
-		return false, err
+		return CreateUserResponse{}, err
 	}
 
 	var userExists bool
@@ -38,26 +43,32 @@ func CreateUserCommandHandler(command CreateUserCommand, ctx context.Context) (a
 		command.Username).
 		Scan(&userExists)
 	if err != nil {
-		return false, err
+		return CreateUserResponse{}, err
 	}
 
 	if userExists {
-		return false, httpErrors.Conflict().WithMessage("username is already taken")
+		return CreateUserResponse{}, httpErrors.Conflict().WithMessage("username is already taken")
 	}
 
-	_, err = tx.Exec(`insert into "public"."users" 
+	var id uuid.UUID
+	err = tx.QueryRow(`insert into "public"."users" 
 			("display_name", "username", "hashed_password")
-			values ($1, $2, $3);`,
-		command.DisplayName, command.Username, hashedPassword)
+			values ($1, $2, $3)
+			returning "id";`,
+		command.DisplayName, command.Username, hashedPassword).Scan(&id)
 	if err != nil {
-		return false, err
+		return CreateUserResponse{}, err
 	}
 
-	userCreatedEvent := events.UserCreatedEvent{}
+	userCreatedEvent := events.UserCreatedEvent{
+		Id: id,
+	}
 	err = mediator.SendEvent(m, userCreatedEvent, ctx)
 	if err != nil {
-		return false, err
+		return CreateUserResponse{}, err
 	}
 
-	return true, nil
+	return CreateUserResponse{
+		Id: id,
+	}, nil
 }

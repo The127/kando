@@ -42,5 +42,26 @@ func Asset(db *sql.DB, manufacturerId *uuid.UUID, assetTypeId *uuid.UUID, parent
 		panic(err)
 	}
 
-	return fields.Merge(withId(id))
+	return fields.WithId(id)
+}
+
+func AssetExists(db *sql.DB, manufacturerId *uuid.UUID, assetTypeId *uuid.UUID, parentId *uuid.UUID, overwrites *FieldValues) bool {
+	fields := assetFields(overwrites)
+
+	var id uuid.UUID
+	err := db.QueryRow(`select id from assets where name = $1 and serial_number = $2 and batch_number = $3 and manufacturer_id = $4 and asset_type_id = $5 and parent_id = $6`,
+		get[string](fields, "name"),
+		get[string](fields, "serial_number"),
+		get[string](fields, "batch_number"),
+		manufacturerId,
+		assetTypeId,
+		parentId).Scan(&id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false
+		}
+		panic(err)
+	}
+
+	return true
 }

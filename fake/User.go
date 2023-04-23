@@ -40,7 +40,7 @@ func User(db *sql.DB, overwrites *FieldValues) *FieldValues {
 		panic(err)
 	}
 
-	return fields.Merge(withId(id))
+	return fields.WithId(id)
 }
 
 func UserExists(db *sql.DB, overwrites *FieldValues) bool {

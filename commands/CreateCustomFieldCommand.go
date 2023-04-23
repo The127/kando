@@ -15,14 +15,18 @@ type CreateCustomFieldCommand struct {
 	Value                   any
 }
 
-func CreateCustomFieldCommandHandler(command CreateCustomFieldCommand, ctx context.Context) (any, error) {
+type CreateCustomFieldResponse struct {
+	Id uuid.UUID
+}
+
+func CreateCustomFieldCommandHandler(command CreateCustomFieldCommand, ctx context.Context) (CreateCustomFieldResponse, error) {
 	scope := middlewares.GetScope(ctx)
 
 	rcs := ioc.Get[*services.RequestContextService](scope)
 
 	tx, err := rcs.GetTx()
 	if err != nil {
-		return false, err
+		return CreateCustomFieldResponse{}, err
 	}
 
 	var customFieldExists bool
@@ -30,23 +34,27 @@ func CreateCustomFieldCommandHandler(command CreateCustomFieldCommand, ctx conte
 		command.AssetTypeId, command.CustomFieldDefinitionId).
 		Scan(&customFieldExists)
 	if err != nil {
-		return false, err
+		return CreateCustomFieldResponse{}, err
 	}
 
 	if customFieldExists {
-		return false, httpErrors.Conflict().WithMessage("custom field already exists")
+		return CreateCustomFieldResponse{}, httpErrors.Conflict().WithMessage("custom field already exists")
 	}
 
 	customFieldValue := make(map[string]any)
 	customFieldValue["value"] = command.Value
 
-	_, err = tx.Exec(`insert into "public"."custom_fields"
+	var id uuid.UUID
+	err = tx.QueryRow(`insert into "public"."custom_fields"
 				("asset_id", "custom_field_definition_id", "value")
-				values ($1, $2, $3)`,
-		command.AssetTypeId, command.CustomFieldDefinitionId, customFieldValue)
+				values ($1, $2, $3)
+				returning id`,
+		command.AssetTypeId, command.CustomFieldDefinitionId, customFieldValue).Scan(&id)
 	if err != nil {
-		return false, err
+		return CreateCustomFieldResponse{}, err
 	}
 
-	return true, nil
+	return CreateCustomFieldResponse{
+		Id: id,
+	}, nil
 }

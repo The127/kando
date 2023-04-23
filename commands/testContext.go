@@ -8,7 +8,7 @@ import (
 	"kando-backend/services"
 )
 
-func testContext(dbConn *sql.DB) context.Context {
+func startTestContext(dbConn *sql.DB) context.Context {
 	dpb := ioc.NewDependencyProviderBuilder()
 
 	ioc.AddSingleton(dpb, func(dp *ioc.DependencyProvider) *sql.DB {
@@ -31,4 +31,14 @@ func testContext(dbConn *sql.DB) context.Context {
 	dp := dpb.Build()
 
 	return context.WithValue(context.TODO(), "scope", dp)
+}
+
+func closeTestContext(ctx context.Context) {
+	dp := ctx.Value("scope").(*ioc.DependencyProvider)
+
+	errors := dp.Close()
+
+	if len(errors) > 0 {
+		panic(errors)
+	}
 }

@@ -3,6 +3,7 @@ package commands
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"kando-backend/fake"
 	"kando-backend/httpErrors"
 	"kando-backend/tests"
 	"testing"
@@ -18,24 +19,30 @@ func TestRunCreateManufacturerCommandTestSuite(t *testing.T) {
 
 func (s *CreateManufacturerCommandTestSuite) TestValidInputs() {
 	// arrange
-	ctx := testContext(s.DbConn())
+	ctx := startTestContext(s.DbConn())
 
 	request := CreateManufacturerCommand{
 		Name: "Name",
 	}
 
 	// act
-	_, err := CreateManufacturerCommandHandler(request, ctx)
+	response, err := CreateManufacturerCommandHandler(request, ctx)
+
+	closeTestContext(ctx)
 
 	// assert
 	a := assert.New(s.T())
 
 	a.Nil(err)
+
+	a.True(fake.ManufacturerExists(s.DbConn(), fake.WithFields(
+		"name", request.Name,
+	).WithId(response.Id)))
 }
 
 func (s *CreateManufacturerCommandTestSuite) TestNameAlreadyExists() {
 	// arrange
-	ctx := testContext(s.DbConn())
+	ctx := startTestContext(s.DbConn())
 
 	request := CreateManufacturerCommand{
 		Name: "Name",
@@ -44,6 +51,8 @@ func (s *CreateManufacturerCommandTestSuite) TestNameAlreadyExists() {
 	// act
 	_, _ = CreateManufacturerCommandHandler(request, ctx)
 	_, err := CreateManufacturerCommandHandler(request, ctx)
+
+	closeTestContext(ctx)
 
 	// assert
 	a := assert.New(s.T())

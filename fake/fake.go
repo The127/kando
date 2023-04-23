@@ -52,8 +52,8 @@ func WithFields(fieldValues ...any) *FieldValues {
 	}
 }
 
-func withId(id uuid.UUID) *FieldValues {
-	return WithFields("id", id)
+func (fvs *FieldValues) WithId(id uuid.UUID) *FieldValues {
+	return fvs.Merge(WithFields("id", id))
 }
 
 func get[TValue any](fvs *FieldValues, field string) TValue {

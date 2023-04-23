@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"kando-backend/httpErrors"
 	"kando-backend/ioc"
 	"kando-backend/middlewares"
@@ -12,14 +13,18 @@ type CreateTagCommand struct {
 	Name string
 }
 
-func CreateTagCommandHandler(command CreateTagCommand, ctx context.Context) (any, error) {
+type CreateTagResponse struct {
+	Id uuid.UUID
+}
+
+func CreateTagCommandHandler(command CreateTagCommand, ctx context.Context) (CreateTagResponse, error) {
 	scope := middlewares.GetScope(ctx)
 
 	rcs := ioc.Get[*services.RequestContextService](scope)
 
 	tx, err := rcs.GetTx()
 	if err != nil {
-		return false, err
+		return CreateTagResponse{}, err
 	}
 
 	var tagExists bool
@@ -27,20 +32,24 @@ func CreateTagCommandHandler(command CreateTagCommand, ctx context.Context) (any
 		command.Name).
 		Scan(&tagExists)
 	if err != nil {
-		return false, err
+		return CreateTagResponse{}, err
 	}
 
 	if tagExists {
-		return false, httpErrors.Conflict().WithMessage("tag already exists")
+		return CreateTagResponse{}, httpErrors.Conflict().WithMessage("tag already exists")
 	}
 
-	_, err = tx.Exec(`insert into "public"."tags"
+	var id uuid.UUID
+	err = tx.QueryRow(`insert into "public"."tags"
     			("name")
-    			values ($1)`,
-		command.Name)
+    			values ($1)
+    			returning id`,
+		command.Name).Scan(&id)
 	if err != nil {
-		return false, err
+		return CreateTagResponse{}, err
 	}
 
-	return true, nil
+	return CreateTagResponse{
+		Id: id,
+	}, nil
 }

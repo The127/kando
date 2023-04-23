@@ -22,14 +22,14 @@ type CreateAssetResponse struct {
 	Id uuid.UUID
 }
 
-func CreateAssetCommandHandler(request CreateAssetCommand, ctx context.Context) (uuid.UUID, error) {
+func CreateAssetCommandHandler(request CreateAssetCommand, ctx context.Context) (CreateAssetResponse, error) {
 	scope := middlewares.GetScope(ctx)
 
 	rcs := ioc.Get[*services.RequestContextService](scope)
 
 	tx, err := rcs.GetTx()
 	if err != nil {
-		return uuid.UUID{}, err
+		return CreateAssetResponse{}, err
 	}
 
 	var assetTypeExists bool
@@ -37,11 +37,11 @@ func CreateAssetCommandHandler(request CreateAssetCommand, ctx context.Context) 
 		request.AssetTypeId).
 		Scan(&assetTypeExists)
 	if err != nil {
-		return uuid.UUID{}, err
+		return CreateAssetResponse{}, err
 	}
 
 	if !assetTypeExists {
-		return uuid.UUID{}, httpErrors.NotFound().WithMessage("asset type does not exist")
+		return CreateAssetResponse{}, httpErrors.NotFound().WithMessage("asset type does not exist")
 	}
 
 	if request.SerialNumber != nil {
@@ -50,11 +50,11 @@ func CreateAssetCommandHandler(request CreateAssetCommand, ctx context.Context) 
 			request.SerialNumber, request.AssetTypeId).
 			Scan(&assetExists)
 		if err != nil {
-			return uuid.UUID{}, err
+			return CreateAssetResponse{}, err
 		}
 
 		if assetExists {
-			return uuid.UUID{}, httpErrors.Conflict().WithMessage("asset already exists")
+			return CreateAssetResponse{}, httpErrors.Conflict().WithMessage("asset already exists")
 		}
 	}
 
@@ -64,11 +64,11 @@ func CreateAssetCommandHandler(request CreateAssetCommand, ctx context.Context) 
 			request.ParentId).
 			Scan(&assetExists)
 		if err != nil {
-			return uuid.UUID{}, err
+			return CreateAssetResponse{}, err
 		}
 
 		if !assetExists {
-			return uuid.UUID{}, httpErrors.NotFound().WithMessage("parent asset does not exist")
+			return CreateAssetResponse{}, httpErrors.NotFound().WithMessage("parent asset does not exist")
 		}
 	}
 
@@ -80,8 +80,10 @@ func CreateAssetCommandHandler(request CreateAssetCommand, ctx context.Context) 
 		request.AssetTypeId, request.Name, request.SerialNumber, request.BatchNumber, request.ManufacturerId, request.ParentId).
 		Scan(&assetId)
 	if err != nil {
-		return uuid.UUID{}, err
+		return CreateAssetResponse{}, err
 	}
 
-	return assetId, nil
+	return CreateAssetResponse{
+		Id: assetId,
+	}, nil
 }

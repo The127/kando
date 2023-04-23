@@ -15,7 +15,11 @@ type CreateManufacturerCommand struct {
 	Name string
 }
 
-func CreateManufacturerCommandHandler(command CreateManufacturerCommand, ctx context.Context) (any, error) {
+type CreateManufacturerResponse struct {
+	Id uuid.UUID
+}
+
+func CreateManufacturerCommandHandler(command CreateManufacturerCommand, ctx context.Context) (CreateManufacturerResponse, error) {
 	scope := middlewares.GetScope(ctx)
 
 	m := ioc.Get[*mediator.Mediator](scope)
@@ -23,7 +27,7 @@ func CreateManufacturerCommandHandler(command CreateManufacturerCommand, ctx con
 
 	tx, err := rcs.GetTx()
 	if err != nil {
-		return false, err
+		return CreateManufacturerResponse{}, err
 	}
 
 	var manufacturerExists bool
@@ -31,11 +35,11 @@ func CreateManufacturerCommandHandler(command CreateManufacturerCommand, ctx con
 		command.Name).
 		Scan(&manufacturerExists)
 	if err != nil {
-		return false, err
+		return CreateManufacturerResponse{}, err
 	}
 
 	if manufacturerExists {
-		return false, httpErrors.Conflict().WithMessage("manufacturer already exists")
+		return CreateManufacturerResponse{}, httpErrors.Conflict().WithMessage("manufacturer already exists")
 	}
 
 	var manufacturerId uuid.UUID
@@ -46,7 +50,7 @@ func CreateManufacturerCommandHandler(command CreateManufacturerCommand, ctx con
 		command.Name).
 		Scan(&manufacturerId)
 	if err != nil {
-		return false, err
+		return CreateManufacturerResponse{}, err
 	}
 
 	manufacturerCreatedEvent := events.ManufacturerCreatedEvent{
@@ -54,5 +58,7 @@ func CreateManufacturerCommandHandler(command CreateManufacturerCommand, ctx con
 	}
 	err = mediator.SendEvent(m, manufacturerCreatedEvent, ctx)
 
-	return true, nil
+	return CreateManufacturerResponse{
+		Id: manufacturerId,
+	}, nil
 }

@@ -9,7 +9,7 @@ import (
 func customFieldDefinitionFields(assetTypeId uuid.UUID, overwrites *FieldValues) *FieldValues {
 	return WithFields(
 		"name", faker.Word(),
-		"field_type", "string",
+		"field_type", "text",
 		"asset_type_id", assetTypeId,
 	).Merge(overwrites)
 }
@@ -28,7 +28,7 @@ func CustomFieldDefinition(db *sql.DB, assetTypeId uuid.UUID, overwrites *FieldV
 		panic(err)
 	}
 
-	return fields.Merge(withId(id))
+	return fields.WithId(id)
 }
 
 func CustomFieldDefinitionExists(db *sql.DB, assetTypeId uuid.UUID, overwrites *FieldValues) bool {

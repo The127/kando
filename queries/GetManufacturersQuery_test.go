@@ -34,6 +34,8 @@ func (suite *GetManufacturersQueryTestSuite) TestNoMatches() {
 	// act
 	result, err := GetManufacturersQueryHandler(request, ctx)
 
+	closeTestContext(ctx)
+
 	// assert
 	a := assert.New(suite.T())
 
@@ -62,6 +64,8 @@ func (suite *GetManufacturersQueryTestSuite) TestSingleMatch() {
 
 	// act
 	result, err := GetManufacturersQueryHandler(request, ctx)
+
+	closeTestContext(ctx)
 
 	// assert
 	a := assert.New(suite.T())
@@ -95,6 +99,8 @@ func (suite *GetManufacturersQueryTestSuite) TestMultipleMatches() {
 	// act
 	result, err := GetManufacturersQueryHandler(request, ctx)
 
+	closeTestContext(ctx)
+
 	// assert
 	a := assert.New(suite.T())
 
@@ -126,6 +132,8 @@ func (suite *GetManufacturersQueryTestSuite) TestPagination() {
 
 	// act
 	result, err := GetManufacturersQueryHandler(request, ctx)
+
+	closeTestContext(ctx)
 
 	// assert
 	a := assert.New(suite.T())

@@ -19,11 +19,11 @@ func TestCreateSessionCommandTestSuite(t *testing.T) {
 
 func (s *CreateSessionCommandTestSuite) TestValidInputs() {
 	// arrange
-	ctx := testContext(s.DbConn())
+	ctx := startTestContext(s.DbConn())
 
-	fake.User(s.DbConn(), fake.WithFields(
+	userId := fake.User(s.DbConn(), fake.WithFields(
 		"username", "testuser",
-		"password", "testpassword"))
+		"password", "testpassword")).Id()
 
 	request := CreateSessionCommand{
 		Username: "testuser",
@@ -31,17 +31,23 @@ func (s *CreateSessionCommandTestSuite) TestValidInputs() {
 	}
 
 	// act
-	_, err := CreateSessionCommandHandler(request, ctx)
+	response, err := CreateSessionCommandHandler(request, ctx)
+
+	closeTestContext(ctx)
 
 	// assert
 	a := assert.New(s.T())
 
 	a.Nil(err)
+
+	a.True(fake.SessionExists(s.DbConn(), userId, fake.WithFields(
+		"username", request.Username,
+	).WithId(response.Id)))
 }
 
 func (s *CreateSessionCommandTestSuite) TestInvalidUsername() {
 	// arrange
-	ctx := testContext(s.DbConn())
+	ctx := startTestContext(s.DbConn())
 
 	fake.User(s.DbConn(), fake.WithFields(
 		"username", "testuser",
@@ -55,6 +61,8 @@ func (s *CreateSessionCommandTestSuite) TestInvalidUsername() {
 	// act
 	_, err := CreateSessionCommandHandler(request, ctx)
 
+	closeTestContext(ctx)
+
 	// assert
 	a := assert.New(s.T())
 
@@ -64,7 +72,7 @@ func (s *CreateSessionCommandTestSuite) TestInvalidUsername() {
 
 func (s *CreateSessionCommandTestSuite) TestInvalidPassword() {
 	// arrange
-	ctx := testContext(s.DbConn())
+	ctx := startTestContext(s.DbConn())
 
 	fake.User(s.DbConn(), fake.WithFields(
 		"username", "testuser",
@@ -77,6 +85,8 @@ func (s *CreateSessionCommandTestSuite) TestInvalidPassword() {
 
 	// act
 	_, err := CreateSessionCommandHandler(request, ctx)
+
+	closeTestContext(ctx)
 
 	// assert
 	a := assert.New(s.T())

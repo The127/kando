@@ -17,12 +17,29 @@ func AssetType(db *sql.DB, overwrites *FieldValues) *FieldValues {
 
 	var id uuid.UUID
 	err := db.QueryRow(`insert into asset_types (name)
-    									values ($2)
+    									values ($1)
     									returning id`,
 		get[string](fields, "name")).Scan(&id)
 	if err != nil {
 		panic(err)
 	}
 
-	return fields.Merge(withId(id))
+	return fields.WithId(id)
+}
+
+func AssetTypeExists(db *sql.DB, overwrites *FieldValues) bool {
+	fields := assetTypeFields(overwrites)
+
+	var id uuid.UUID
+	err := db.QueryRow(`select id from asset_types where name = $1`,
+		get[string](fields, "name")).Scan(&id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false
+		}
+
+		panic(err)
+	}
+
+	return true
 }

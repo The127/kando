@@ -12,4 +12,4 @@ alter table "custom_fields"
     add constraint "fk_asset_fields_asset" foreign key ("asset_id") references "assets";
 
 alter table "custom_fields"
-    add constraint "fk_custom_fields_custom_field_definition" foreign key ("custom_field_definition_id") references "custom_field_definition";
+    add constraint "fk_custom_fields_custom_field_definition" foreign key ("custom_field_definition_id") references "custom_field_definitions";

@@ -3,6 +3,7 @@ package commands
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"kando-backend/fake"
 	"kando-backend/httpErrors"
 	"kando-backend/tests"
 	"testing"
@@ -18,32 +19,42 @@ func TestRunCreateAssetTypeCommandTestSuite(t *testing.T) {
 
 func (s *CreateAssetTypeCommandTestSuite) TestValidInputs() {
 	// arrange
-	ctx := testContext(s.DbConn())
+	ctx := startTestContext(s.DbConn())
 
 	request := CreateAssetTypeCommand{
 		Name: "Name",
 	}
 
 	// act
-	_, err := CreateAssetTypeCommandHandler(request, ctx)
+	response, err := CreateAssetTypeCommandHandler(request, ctx)
+
+	closeTestContext(ctx)
 
 	// assert
 	a := assert.New(s.T())
 
 	a.Nil(err)
+
+	a.True(fake.AssetTypeExists(s.DbConn(), fake.WithFields(
+		"name", request.Name,
+	).WithId(response.Id)))
 }
 
 func (s *CreateAssetTypeCommandTestSuite) TestNameAlreadyExists() {
 	// arrange
-	ctx := testContext(s.DbConn())
+	ctx := startTestContext(s.DbConn())
+
+	fake.AssetType(s.DbConn(), fake.WithFields(
+		"name", "Name",
+	))
 
 	request := CreateAssetTypeCommand{
 		Name: "Name",
 	}
 
 	// act
-	_, _ = CreateAssetTypeCommandHandler(request, ctx)
 	_, err := CreateAssetTypeCommandHandler(request, ctx)
+	closeTestContext(ctx)
 
 	// assert
 	a := assert.New(s.T())

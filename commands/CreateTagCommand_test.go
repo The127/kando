@@ -3,6 +3,7 @@ package commands
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"kando-backend/fake"
 	"kando-backend/tests"
 	"testing"
 )
@@ -17,17 +18,23 @@ func TestRunCreateTagCommandTestSuite(t *testing.T) {
 
 func (suite *CreateTagCommandTestSuite) TestValidInputs() {
 	// arrange
-	ctx := testContext(suite.DbConn())
+	ctx := startTestContext(suite.DbConn())
 
 	request := CreateTagCommand{
 		Name: "Test Tag",
 	}
 
 	// act
-	_, err := CreateTagCommandHandler(request, ctx)
+	response, err := CreateTagCommandHandler(request, ctx)
+
+	closeTestContext(ctx)
 
 	// assert
 	a := assert.New(suite.T())
 
 	a.Nil(err)
+
+	a.True(fake.TagExists(suite.DbConn(), fake.WithFields(
+		"name", request.Name,
+	).WithId(response.Id)))
 }

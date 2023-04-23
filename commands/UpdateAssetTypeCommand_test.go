@@ -17,9 +17,9 @@ func TestRunUpdateAssetTypeCommandTestSuite(t *testing.T) {
 
 func (s *UpdateAssetTypeCommandTestSuite) TestValidInputs() {
 	// arrange
-	ctx := testContext(s.DbConn())
+	ctx := startTestContext(s.DbConn())
 
-	assetTypeId := fake.Manufacturer(s.DbConn(), fake.WithDefaults())
+	assetTypeId := fake.Manufacturer(s.DbConn(), fake.WithDefaults()).Id()
 
 	request := UpdateAssetTypeCommand{
 		Id:   assetTypeId,
@@ -29,8 +29,14 @@ func (s *UpdateAssetTypeCommandTestSuite) TestValidInputs() {
 	// act
 	_, err := UpdateAssetTypeCommandHandler(request, ctx)
 
+	closeTestContext(ctx)
+
 	// assert
 	a := s.Assert()
 
 	a.Nil(err)
+
+	a.True(fake.AssetTypeExists(s.DbConn(), fake.WithFields(
+		"name", request.Name,
+	).WithId(request.Id)))
 }

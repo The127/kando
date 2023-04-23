@@ -28,6 +28,8 @@ func (suite *GetAssetTypesQueryTestSuite) TestNoMatches() {
 	// act
 	result, err := GetAssetTypesQueryHandler(request, ctx)
 
+	closeTestContext(ctx)
+
 	// assert
 	a := assert.New(suite.T())
 
@@ -56,6 +58,8 @@ func (suite *GetAssetTypesQueryTestSuite) TestSingleMatch() {
 
 	// act
 	result, err := GetAssetTypesQueryHandler(request, ctx)
+
+	closeTestContext(ctx)
 
 	// assert
 	a := assert.New(suite.T())
@@ -88,6 +92,8 @@ func (suite *GetAssetTypesQueryTestSuite) TestMultipleMatches() {
 
 	// act
 	result, err := GetAssetTypesQueryHandler(request, ctx)
+
+	closeTestContext(ctx)
 
 	// assert
 	a := assert.New(suite.T())
