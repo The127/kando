@@ -1,7 +1,29 @@
 package fake
 
+import "github.com/google/uuid"
+
 type FieldValues struct {
 	values map[string]any
+}
+
+func (fvs *FieldValues) Merge(overwrites *FieldValues) *FieldValues {
+	var merged = make(map[string]any)
+
+	for k, v := range fvs.values {
+		merged[k] = v
+	}
+
+	for k, v := range overwrites.values {
+		merged[k] = v
+	}
+
+	return &FieldValues{
+		values: merged,
+	}
+}
+
+func (fvs *FieldValues) Id() uuid.UUID {
+	return get[uuid.UUID](fvs, "id")
 }
 
 func WithDefaults() *FieldValues {
@@ -30,10 +52,10 @@ func WithFields(fieldValues ...any) *FieldValues {
 	}
 }
 
-func get[TValue any](fvs *FieldValues, field string, defaultValue TValue) TValue {
-	value, ok := fvs.values[field]
-	if !ok {
-		value = defaultValue
-	}
-	return value.(TValue)
+func withId(id uuid.UUID) *FieldValues {
+	return WithFields("id", id)
+}
+
+func get[TValue any](fvs *FieldValues, field string) TValue {
+	return fvs.values[field].(TValue)
 }

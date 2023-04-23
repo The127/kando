@@ -7,9 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func Asset(db *sql.DB, manufacturerId *uuid.UUID, assetTypeId *uuid.UUID, parentId *uuid.UUID, fields *FieldValues) uuid.UUID {
-	id := uuid.New()
-
+func assetFields(overwrites *FieldValues) *FieldValues {
 	serialNumber, err := faker.RandomInt(100000, 999999)
 	if err != nil {
 		panic(err)
@@ -20,17 +18,29 @@ func Asset(db *sql.DB, manufacturerId *uuid.UUID, assetTypeId *uuid.UUID, parent
 		panic(err)
 	}
 
-	_, err = db.Exec(`insert into assets (id, name, serial_number, batch_number, manufacturer_id, asset_type_id, parent_id) values ($1, $2, $3, $4, $5, $6, $7)`,
-		id,
-		get(fields, "name", faker.Word()),
-		get(fields, "serial_number", fmt.Sprintf("S-%d", serialNumber)),
-		get(fields, "batch_number", fmt.Sprintf("B-%d", batchNumber)),
+	return WithFields(
+		"name", faker.Word(),
+		"serial_number", fmt.Sprintf("S-%d", serialNumber),
+		"batch_number", fmt.Sprintf("B-%d", batchNumber),
+	).Merge(overwrites)
+}
+
+func Asset(db *sql.DB, manufacturerId *uuid.UUID, assetTypeId *uuid.UUID, parentId *uuid.UUID, overwrites *FieldValues) *FieldValues {
+	fields := assetFields(overwrites)
+
+	var id uuid.UUID
+	err := db.QueryRow(`insert into assets (name, serial_number, batch_number, manufacturer_id, asset_type_id, parent_id)
+    									values ($1, $2, $3, $4, $5, $6)
+    									returning id`,
+		get[string](fields, "name"),
+		get[string](fields, "serial_number"),
+		get[string](fields, "batch_number"),
 		manufacturerId,
 		assetTypeId,
-		parentId)
+		parentId).Scan(&id)
 	if err != nil {
 		panic(err)
 	}
 
-	return id
+	return fields.Merge(withId(id))
 }

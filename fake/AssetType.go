@@ -6,15 +6,23 @@ import (
 	"github.com/google/uuid"
 )
 
-func AssetType(db *sql.DB, fields *FieldValues) uuid.UUID {
-	id := uuid.New()
+func assetTypeFields(overwrites *FieldValues) *FieldValues {
+	return WithFields(
+		"name", faker.Word(),
+	).Merge(overwrites)
+}
 
-	_, err := db.Exec(`insert into asset_types (id, name, manufacturer_id) VALUES ($1, $2, $3)`,
-		id,
-		get(fields, "name", faker.Word()))
+func AssetType(db *sql.DB, overwrites *FieldValues) *FieldValues {
+	fields := assetTypeFields(overwrites)
+
+	var id uuid.UUID
+	err := db.QueryRow(`insert into asset_types (name)
+    									values ($2)
+    									returning id`,
+		get[string](fields, "name")).Scan(&id)
 	if err != nil {
 		panic(err)
 	}
 
-	return id
+	return fields.Merge(withId(id))
 }
