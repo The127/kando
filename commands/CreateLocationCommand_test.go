@@ -3,7 +3,6 @@ package commands
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"kando-backend/fake"
 	"kando-backend/tests"
 	"testing"
 )
@@ -34,7 +33,8 @@ func (suite *CreateLocationCommandTestSuite) TestValidInputs() {
 
 	a.Nil(err)
 
-	a.True(fake.LocationExists(suite.DbConn(), fake.WithFields(
-		"name", request.Name,
-	).WithId(response.Id)))
+	suite.VerifyRow("locations", map[string]any{
+		"id":   response.Id,
+		"name": request.Name,
+	})
 }

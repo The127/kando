@@ -3,7 +3,6 @@ package commands
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"kando-backend/fake"
 	"kando-backend/tests"
 	"testing"
 )
@@ -20,7 +19,7 @@ func (suite *CreateCustomFieldDefinitionCommandTestSuite) TestValidInputs() {
 	// arrange
 	ctx := startTestContext(suite.DbConn())
 
-	assetTypeId := fake.AssetType(suite.DbConn(), fake.WithDefaults()).Id()
+	assetTypeId := suite.InsertRow("asset_types", tests.AssetTypeValues(nil))
 
 	request := CreateCustomFieldDefinitionCommand{
 		AssetTypeId: assetTypeId,
@@ -37,8 +36,10 @@ func (suite *CreateCustomFieldDefinitionCommandTestSuite) TestValidInputs() {
 
 	a.Nil(err)
 
-	a.True(fake.CustomFieldDefinitionExists(suite.DbConn(), assetTypeId, fake.WithFields(
-		"name", request.Name,
-		"field_type", request.FieldType,
-	).WithId(response.Id)))
+	suite.VerifyRow("custom_field_definitions", map[string]any{
+		"id":            response.Id,
+		"asset_type_id": request.AssetTypeId,
+		"name":          request.Name,
+		"field_type":    request.FieldType,
+	})
 }

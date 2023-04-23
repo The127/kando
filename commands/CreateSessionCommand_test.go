@@ -3,7 +3,6 @@ package commands
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"kando-backend/fake"
 	"kando-backend/httpErrors"
 	"kando-backend/tests"
 	"testing"
@@ -21,9 +20,10 @@ func (s *CreateSessionCommandTestSuite) TestValidInputs() {
 	// arrange
 	ctx := startTestContext(s.DbConn())
 
-	userId := fake.User(s.DbConn(), fake.WithFields(
-		"username", "testuser",
-		"password", "testpassword")).Id()
+	userId := s.InsertRow("users", tests.UserValues(map[string]any{
+		"username": "testuser",
+		"password": "testpassword",
+	}))
 
 	request := CreateSessionCommand{
 		Username: "testuser",
@@ -40,18 +40,19 @@ func (s *CreateSessionCommandTestSuite) TestValidInputs() {
 
 	a.Nil(err)
 
-	a.True(fake.SessionExists(s.DbConn(), userId, fake.WithFields(
-		"username", request.Username,
-	).WithId(response.Id)))
+	s.VerifyRow("sessions", map[string]any{
+		"id":      response.Id,
+		"user_id": userId,
+	})
 }
 
 func (s *CreateSessionCommandTestSuite) TestInvalidUsername() {
 	// arrange
 	ctx := startTestContext(s.DbConn())
 
-	fake.User(s.DbConn(), fake.WithFields(
-		"username", "testuser",
-		"password", "testpassword"))
+	s.InsertRow("users", tests.UserValues(map[string]any{
+		"username": "testuser",
+	}))
 
 	request := CreateSessionCommand{
 		Username: "wronguser",
@@ -74,9 +75,10 @@ func (s *CreateSessionCommandTestSuite) TestInvalidPassword() {
 	// arrange
 	ctx := startTestContext(s.DbConn())
 
-	fake.User(s.DbConn(), fake.WithFields(
-		"username", "testuser",
-		"password", "testpassword"))
+	s.InsertRow("users", tests.UserValues(map[string]any{
+		"username": "testuser",
+		"password": "testpassword",
+	}))
 
 	request := CreateSessionCommand{
 		Username: "testuser",

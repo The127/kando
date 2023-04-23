@@ -2,7 +2,6 @@ package commands
 
 import (
 	"github.com/stretchr/testify/suite"
-	"kando-backend/fake"
 	"kando-backend/tests"
 	"testing"
 )
@@ -19,7 +18,7 @@ func (s *UpdateAssetTypeCommandTestSuite) TestValidInputs() {
 	// arrange
 	ctx := startTestContext(s.DbConn())
 
-	assetTypeId := fake.Manufacturer(s.DbConn(), fake.WithDefaults()).Id()
+	assetTypeId := s.InsertRow("asset_types", tests.AssetTypeValues(nil))
 
 	request := UpdateAssetTypeCommand{
 		Id:   assetTypeId,
@@ -36,7 +35,8 @@ func (s *UpdateAssetTypeCommandTestSuite) TestValidInputs() {
 
 	a.Nil(err)
 
-	a.True(fake.AssetTypeExists(s.DbConn(), fake.WithFields(
-		"name", request.Name,
-	).WithId(request.Id)))
+	s.VerifyRow("asset_types", map[string]any{
+		"id":   request.Id,
+		"name": request.Name,
+	})
 }

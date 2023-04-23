@@ -2,7 +2,6 @@ package commands
 
 import (
 	"github.com/stretchr/testify/suite"
-	"kando-backend/fake"
 	"kando-backend/tests"
 )
 
@@ -18,7 +17,7 @@ func (s *UpdateManufacturerCommandTestSuite) TestValidInputs() {
 	// arrange
 	ctx := startTestContext(s.DbConn())
 
-	manufacturerId := fake.Manufacturer(s.DbConn(), fake.WithDefaults()).Id()
+	manufacturerId := s.InsertRow("manufacturers", tests.ManufacturerValues(nil))
 
 	request := UpdateManufacturerCommand{
 		Id:   manufacturerId,
@@ -35,7 +34,8 @@ func (s *UpdateManufacturerCommandTestSuite) TestValidInputs() {
 
 	a.Nil(err)
 
-	a.True(fake.ManufacturerExists(s.DbConn(), fake.WithFields(
-		"name", request.Name,
-	).WithId(request.Id)))
+	s.VerifyRow("manufacturers", map[string]any{
+		"id":   request.Id,
+		"name": request.Name,
+	})
 }
